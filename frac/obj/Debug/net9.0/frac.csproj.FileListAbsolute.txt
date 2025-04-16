@@ -1,0 +1,14 @@
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.AssemblyInfoInputs.cache
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.AssemblyInfo.cs
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.csproj.CoreCompileInputs.cache
+C:\Users\Anufriev\RiderProjects\Fractals\frac\bin\Debug\net9.0\frac.exe
+C:\Users\Anufriev\RiderProjects\Fractals\frac\bin\Debug\net9.0\frac.deps.json
+C:\Users\Anufriev\RiderProjects\Fractals\frac\bin\Debug\net9.0\frac.runtimeconfig.json
+C:\Users\Anufriev\RiderProjects\Fractals\frac\bin\Debug\net9.0\frac.dll
+C:\Users\Anufriev\RiderProjects\Fractals\frac\bin\Debug\net9.0\frac.pdb
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.dll
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\refint\frac.dll
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.pdb
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.genruntimeconfig.cache
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\ref\frac.dll

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор фракталов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        select, button, input {
+            padding: 8px 12px;
+            margin: 0 5px;
+            font-size: 16px;
+        }
+        canvas {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 10px auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Генератор фракталов</h1>
+    
+    <div class="controls">
+        <select id="fractalType">
+            <option value="mandelbrot">Множество Мандельброта</option>
+            <option value="julia">Множество Жюлиа</option>
+            <option value="tree">Фрактальное дерево</option>
+            <option value="sierpinski">Треугольник Серпинского</option>
+            <option value="koch">Кривая Коха</option>
+        </select>
+        
+        <button id="drawBtn">Нарисовать</button>
+        <button id="saveBtn">Сохранить</button>
+        
+        <div id="params" style="margin-top: 10px;">
+            <!-- Параметры будут добавляться динамически -->
+        </div>
+    </div>
+    
+    <canvas id="fractalCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+        const fractalType = document.getElementById('fractalType');
+        const drawBtn = document.getElementById('drawBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const paramsDiv = document.getElementById('params');
+        
+        // Текущие параметры
+        let currentParams = {
+            iterations: 100,
+            colorScheme: 'rainbow',
+            zoom: 1,
+            cx: 0,
+            cy: 0,
+            juliaCx: -0.7,
+            juliaCy: 0.27,
+            treeAngle: Math.PI / 4,
+            treeDepth: 10,
+            treeShrink: 0.7
+        };
+        
+        // Инициализация параметров
+        function initParams() {
+            paramsDiv.innerHTML = '';
+            
+            switch(fractalType.value) {
+                case 'mandelbrot':
+                case 'julia':
+                    addSlider('iterations', 'Итерации:', 20, 500, currentParams.iterations);
+                    addSelect('colorScheme', 'Цветовая схема:', 
+                        ['rainbow', 'grayscale', 'fire', 'ocean'], currentParams.colorScheme);
+                    addSlider('zoom', 'Масштаб:', 0.1, 10, currentParams.zoom, 0.1);
+                    if (fractalType.value === 'julia') {
+                        addSlider('juliaCx', 'Julia Cx:', -1, 1, currentParams.juliaCx, 0.01);
+                        addSlider('juliaCy', 'Julia Cy:', -1, 1, currentParams.juliaCy, 0.01);
+                    }
+                    break;
+                case 'tree':
+                    addSlider('treeDepth', 'Глубина:', 5, 15, currentParams.treeDepth);
+                    addSlider('treeAngle', 'Угол:', 0, Math.PI/2, currentParams.treeAngle, 0.01);
+                    addSlider('treeShrink', 'Сжатие:', 0.3, 0.9, currentParams.treeShrink, 0.01);
+                    break;
+                case 'sierpinski':
+                    addSlider('iterations', 'Итерации:', 1, 10, Math.min(currentParams.iterations, 10));
+                    break;
+                case 'koch':
+                    addSlider('iterations', 'Итерации:', 1, 6, Math.min(currentParams.iterations, 6));
+                    break;
+            }
+        }
+        
+        // Добавление слайдера
+        function addSlider(name, label, min, max, value, step = 1) {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label>${label}</label>
+                <input type="range" id="${name}" min="${min}" max="${max}" value="${value}" step="${step}">
+                <span id="${name}Value">${value}</span>
+            `;
+            paramsDiv.appendChild(div);
+            
+            const slider = document.getElementById(name);
+            const valueSpan = document.getElementById(name + 'Value');
+            
+            slider.addEventListener('input', function() {
+                currentParams[name] = parseFloat(this.value);
+                valueSpan.textContent = this.value;
+            });
+        }
+        
+        // Добавление выпадающего списка
+        function addSelect(name, label, options, value) {
+            const div = document.createElement('div');
+            let optionsHtml = options.map(opt => 
+                `<option value="${opt}" ${opt === value ? 'selected' : ''}>${opt}</option>`
+            ).join('');
+            
+            div.innerHTML = `
+                <label>${label}</label>
+                <select id="${name}">${optionsHtml}</select>
+            `;
+            paramsDiv.appendChild(div);
+            
+            document.getElementById(name).addEventListener('change', function() {
+                currentParams[name] = this.value;
+            });
+        }
+        
+        // Рисование фрактала
+        function drawFractal() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            switch(fractalType.value) {
+                case 'mandelbrot':
+                    drawMandelbrot();
+                    break;
+                case 'julia':
+                    drawJulia();
+                    break;
+                case 'tree':
+                    drawTree();
+                    break;
+                case 'sierpinski':
+                    drawSierpinski();
+                    break;
+                case 'koch':
+                    drawKoch();
+                    break;
+            }
+        }
+        
+        // Множество Мандельброта
+        function drawMandelbrot() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const zoom = currentParams.zoom;
+            const maxIter = currentParams.iterations;
+            
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    // Масштабирование координат
+                    let zx = 0;
+                    let zy = 0;
+                    let cx = (x - width/2) / (0.25 * zoom * width) - 0.5;
+                    let cy = (y - height/2) / (0.25 * zoom * height);
+                    
+                    let iter = maxIter;
+                    while (zx * zx + zy * zy < 4 && iter > 0) {
+                        const tmp = zx * zx - zy * zy + cx;
+                        zy = 2 * zx * zy + cy;
+                        zx = tmp;
+                        iter--;
+                    }
+                    
+                    setPixelColor(x, y, iter, maxIter);
+                }
+            }
+        }
+        
+        // Множество Жюлиа
+        function drawJulia() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const zoom = currentParams.zoom;
+            const maxIter = currentParams.iterations;
+            const cx = currentParams.juliaCx;
+            const cy = currentParams.juliaCy;
+            
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let zx = (x - width/2) / (0.25 * zoom * width);
+                    let zy = (y - height/2) / (0.25 * zoom * height);
+                    
+                    let iter = maxIter;
+                    while (zx * zx + zy * zy < 4 && iter > 0) {
+                        const tmp = zx * zx - zy * zy + cx;
+                        zy = 2 * zx * zy + cy;
+                        zx = tmp;
+                        iter--;
+                    }
+                    
+                    setPixelColor(x, y, iter, maxIter);
+                }
+            }
+        }
+        
+        // Фрактальное дерево
+        function drawTree() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = 'brown';
+            ctx.lineWidth = 2;
+            
+            function drawBranch(x, y, len, angle, depth) {
+                if (depth === 0) return;
+                
+                const x2 = x + len * Math.sin(angle);
+                const y2 = y - len * Math.cos(angle);
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                
+                // Рекурсивно рисуем ветви
+                drawBranch(x2, y2, len * currentParams.treeShrink, angle + currentParams.treeAngle, depth - 1);
+                drawBranch(x2, y2, len * currentParams.treeShrink, angle - currentParams.treeAngle, depth - 1);
+            }
+            
+            drawBranch(canvas.width/2, canvas.height, canvas.height/4, 0, currentParams.treeDepth);
+        }
+        
+        // Треугольник Серпинского
+        function drawSierpinski() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'navy';
+            
+            function drawTriangle(x, y, size, depth) {
+                if (depth === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + size, y);
+                    ctx.lineTo(x + size/2, y - size * Math.sqrt(3)/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    return;
+                }
+                
+                const newSize = size / 2;
+                drawTriangle(x, y, newSize, depth - 1);
+                drawTriangle(x + newSize, y, newSize, depth - 1);
+                drawTriangle(x + newSize/2, y - newSize * Math.sqrt(3)/2, newSize, depth - 1);
+            }
+            
+            drawTriangle(50, canvas.height - 50, canvas.width - 100, currentParams.iterations);
+        }
+        
+        // Кривая Коха
+        function drawKoch() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 1;
+            
+            function drawKochLine(x1, y1, x2, y2, depth) {
+                if (depth === 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                    return;
+                }
+                
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                
+                const x3 = x1 + dx / 3;
+                const y3 = y1 + dy / 3;
+                
+                const x4 = x1 + 2 * dx / 3;
+                const y4 = y1 + 2 * dy / 3;
+                
+                const angle = Math.atan2(dy, dx);
+                const len = Math.sqrt(dx*dx + dy*dy) / 3;
+                
+                const x5 = x3 + len * Math.cos(angle + Math.PI/3);
+                const y5 = y3 + len * Math.sin(angle + Math.PI/3);
+                
+                drawKochLine(x1, y1, x3, y3, depth - 1);
+                drawKochLine(x3, y3, x5, y5, depth - 1);
+                drawKochLine(x5, y5, x4, y4, depth - 1);
+                drawKochLine(x4, y4, x2, y2, depth - 1);
+            }
+            
+            const size = Math.min(canvas.width, canvas.height) * 0.8;
+            const x1 = canvas.width/2 - size/2;
+            const y1 = canvas.height/2 + size * Math.sqrt(3)/4;
+            const x2 = canvas.width/2 + size/2;
+            const y2 = y1;
+            const x3 = canvas.width/2;
+            const y3 = y1 - size * Math.sqrt(3)/2;
+            
+            drawKochLine(x1, y1, x2, y2, currentParams.iterations);
+            drawKochLine(x2, y2, x3, y3, currentParams.iterations);
+            drawKochLine(x3, y3, x1, y1, currentParams.iterations);
+        }
+        
+        // Установка цвета пикселя
+        function setPixelColor(x, y, iter, maxIter) {
+            if (iter === 0) {
+                ctx.fillStyle = 'black';
+            } else {
+                const hue = 360 * iter / maxIter;
+                const saturation = 100;
+                const lightness = iter === maxIter ? 0 : 50;
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            }
+            ctx.fillRect(x, y, 1, 1);
+        }
+        
+        // Сохранение изображения
+        function saveImage() {
+            const link = document.createElement('a');
+            link.download = 'fractal.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // События
+        fractalType.addEventListener('change', initParams);
+        drawBtn.addEventListener('click', drawFractal);
+        saveBtn.addEventListener('click', saveImage);
+        
+        // Инициализация
+        initParams();
+        drawFractal();
+    </script>
+</body>
+</html>
