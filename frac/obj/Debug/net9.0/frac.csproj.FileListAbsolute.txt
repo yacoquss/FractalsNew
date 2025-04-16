@@ -12,3 +12,4 @@ C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\refint\frac.dll
 C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.pdb
 C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.genruntimeconfig.cache
 C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\ref\frac.dll
+C:\Users\Anufriev\RiderProjects\Fractals\frac\obj\Debug\net9.0\frac.sourcelink.json
